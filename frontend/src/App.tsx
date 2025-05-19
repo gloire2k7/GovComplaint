@@ -20,7 +20,6 @@ import Categories from "./pages/Categories";
 
 // Layout
 import MainLayout from "./components/layout/MainLayout";
-import { Link } from "react-router-dom";
 import CitizenDashboard from "./components/dashboard/CitizenDashboard";
 import AgencyDashboard from "./components/dashboard/AgencyDashboard";
 
@@ -39,20 +38,23 @@ const App = () => {
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-
-              {/* Role-based dashboards */}
-              <Route path="/dashboard/citizen" element={<CitizenDashboard />} />
-              <Route path="/dashboard/agency" element={<AgencyDashboard />} />
-
-              {/* Other routes */}
-              <Route path="/complaints" element={<ComplaintsList />} />
-              <Route path="/complaints/new" element={<NewComplaint />} />
-              <Route path="/complaints/review/:id" element={<ReviewComplaint />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/notifications" element={<Notifications />} />
-              <Route path="/categories" element={<Categories />} />
-
+              
+              {/* Protected routes */}
+              <Route element={<MainLayout />}>
+                {/* Role-based dashboards */}
+                <Route path="/dashboard/citizen" element={<CitizenDashboard />} />
+                <Route path="/dashboard/agency" element={<AgencyDashboard />} />
+              
+                {/* Other protected routes */}
+                <Route path="/complaints" element={<ComplaintsList />} />
+                <Route path="/complaints/new" element={<NewComplaint />} />
+                <Route path="/complaints/review/:id" element={<ReviewComplaint />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/categories" element={<Categories />} />
+              </Route>
+              
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
             </Routes>

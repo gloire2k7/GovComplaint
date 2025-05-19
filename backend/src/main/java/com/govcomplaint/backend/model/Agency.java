@@ -27,6 +27,6 @@ public class Agency {
     @Column(nullable = false)
     private String userType; // Should be 'AGENCY'
 
-    @OneToMany(mappedBy = "agency", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "agency", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<AgencyCategory> categories;
 } 

@@ -14,10 +14,7 @@ const Login = () => {
   const location = useLocation();
 
   useEffect(() => {
-    if (
-      currentUser &&
-      location.pathname === '/login'
-    ) {
+    if (currentUser && location.pathname === '/login') {
       if (currentUser.userType === 'CITIZEN') {
         navigate('/dashboard/citizen');
       } else if (currentUser.userType === 'AGENCY') {

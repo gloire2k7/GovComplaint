@@ -103,7 +103,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: `Welcome back, ${userData.displayName}!`
       });
       
-      // Navigate based on user type
+      // Navigate based on user type from the response
       if (userData.userType === "CITIZEN") {
         navigate('/dashboard/citizen');
       } else if (userData.userType === "AGENCY") {

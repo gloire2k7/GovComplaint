@@ -1,14 +1,14 @@
 package com.govcomplaint.backend.dto;
 
-
-import com.govcomplaint.backend.model.Agency;
 import lombok.Data;
+import java.util.UUID;
 
 @Data
 public class ComplaintRequest {
     private String title;
     private String description;
-    private String agencyName;
+    private UUID agencyId;
+    private UUID citizenId;
     private String category;
 
     public String getTitle() {
@@ -27,12 +27,20 @@ public class ComplaintRequest {
         this.description = description;
     }
 
-    public String getAgencyName() {
-        return agencyName;
+    public UUID getAgencyId() {
+        return agencyId;
     }
 
-    public void setAgencyName(String agencyName) {
-        this.agencyName = agencyName;
+    public void setAgencyId(UUID agencyId) {
+        this.agencyId = agencyId;
+    }
+
+    public UUID getCitizenId() {
+        return citizenId;
+    }
+
+    public void setCitizenId(UUID citizenId) {
+        this.citizenId = citizenId;
     }
 
     public String getCategory() {

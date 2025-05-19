@@ -60,10 +60,9 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody Map<String, Object> body) {
         String email = (String) body.get("email");
         String password = (String) body.get("password");
-        String userType = (String) body.get("userType");
-        if (email == null || password == null || userType == null) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Missing required fields"));
+        if (email == null || password == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Email and password are required"));
         }
-        return ResponseEntity.ok(authService.login(email, password, userType));
+        return ResponseEntity.ok(authService.login(email, password));
     }
 } 

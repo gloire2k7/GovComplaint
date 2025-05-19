@@ -1,6 +1,7 @@
 package com.govcomplaint.backend.model;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 public class Complaints {
@@ -8,33 +9,57 @@ public class Complaints {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false,length = 100)
+    @Column(nullable = false, length = 100)
     private String title;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "agency_id",nullable = false)
+    @JoinColumn(name = "agency_id", nullable = false)
     private Agency agency;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "citizen_id",nullable = false)
+    @JoinColumn(name = "citizen_id", nullable = false)
     private Citizen citizen;
 
-    @Column(nullable = false,columnDefinition = "TEXT")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
+
+    @Column(nullable = false)
+    private String category;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ComplaintStatus complaintStatus;
+    private ComplaintStatus complaintStatus = ComplaintStatus.PENDING;
 
-    public  Complaints() {
+    @Column(length = 1000)
+    private String response;
 
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
     }
-    public Complaints(String title, Agency agency, Citizen citizen, String description) {
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    public Complaints() {}
+
+    public Complaints(String title, Agency agency, Citizen citizen, String description, String category) {
         this.title = title;
         this.agency = agency;
         this.citizen = citizen;
         this.description = description;
+        this.category = category;
+        this.complaintStatus = ComplaintStatus.PENDING;
     }
+
     public Long getId() {
         return id;
     }
@@ -75,9 +100,43 @@ public class Complaints {
         this.description = description;
     }
 
-    public void setAgencyName(String agencyName) {
+    public String getCategory() {
+        return category;
     }
 
     public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public ComplaintStatus getComplaintStatus() {
+        return complaintStatus;
+    }
+
+    public void setComplaintStatus(ComplaintStatus complaintStatus) {
+        this.complaintStatus = complaintStatus;
+    }
+
+    public String getResponse() {
+        return response;
+    }
+
+    public void setResponse(String response) {
+        this.response = response;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

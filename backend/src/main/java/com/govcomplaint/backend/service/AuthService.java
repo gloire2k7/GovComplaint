@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -38,7 +39,7 @@ public class AuthService {
     public Object registerAgency(String email, String password, String agencyName, Set<String> categories) {
         if (agencyRepository.existsByEmail(email)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already registered");
-        }
+            }
         Agency agency = new Agency();
         agency.setEmail(email);
         agency.setPassword(passwordEncoder.encode(password));
@@ -56,24 +57,27 @@ public class AuthService {
         return new SimpleUserDTO(agency.getId().toString(), agency.getEmail(), agency.getUserType(), agency.getAgencyName());
     }
 
-    public Object login(String email, String password, String userType) {
-        if (userType.equals("CITIZEN")) {
-            Citizen citizen = citizenRepository.findByEmail(email)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
-            if (!passwordEncoder.matches(password, citizen.getPassword())) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+    public Object login(String email, String password) {
+        // Try to find user in citizen repository
+        Optional<Citizen> citizenOpt = citizenRepository.findByEmail(email);
+        if (citizenOpt.isPresent()) {
+            Citizen citizen = citizenOpt.get();
+            if (passwordEncoder.matches(password, citizen.getPassword())) {
+                return new SimpleUserDTO(citizen.getId().toString(), citizen.getEmail(), citizen.getUserType(), citizen.getFullName());
             }
-            return new SimpleUserDTO(citizen.getId().toString(), citizen.getEmail(), citizen.getUserType(), citizen.getFullName());
-        } else if (userType.equals("AGENCY")) {
-            Agency agency = agencyRepository.findByEmail(email)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
-            if (!passwordEncoder.matches(password, agency.getPassword())) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
-            }
-            return new SimpleUserDTO(agency.getId().toString(), agency.getEmail(), agency.getUserType(), agency.getAgencyName());
-        } else {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid user type");
         }
+
+        // Try to find user in agency repository
+        Optional<Agency> agencyOpt = agencyRepository.findByEmail(email);
+        if (agencyOpt.isPresent()) {
+            Agency agency = agencyOpt.get();
+            if (passwordEncoder.matches(password, agency.getPassword())) {
+                return new SimpleUserDTO(agency.getId().toString(), agency.getEmail(), agency.getUserType(), agency.getAgencyName());
+            }
+        }
+
+        // If we get here, either the email wasn't found or the password was wrong
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
     }
 
     public static class SimpleUserDTO {

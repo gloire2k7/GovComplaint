@@ -1,27 +1,23 @@
-
 import React from "react";
-import { Outlet, Navigate } from "react-router-dom";
+import { Outlet, Navigate, useLocation } from "react-router-dom";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
 
-interface MainLayoutProps {
-  userType?: "citizen" | "agency" | null;
-}
-
-const MainLayout: React.FC<MainLayoutProps> = ({ userType }) => {
+const MainLayout: React.FC = () => {
   const { currentUser } = useAuth();
   const isMobile = useIsMobile();
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = React.useState(!isMobile);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
   
-  // Redirect to login if not authenticated
+  // If not authenticated, redirect to login
   if (!currentUser) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return (

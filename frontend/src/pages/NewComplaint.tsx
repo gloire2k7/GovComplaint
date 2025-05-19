@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,44 +9,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
-// Mock agencies data with their categories
-const mockAgencies = [
-  {
-    id: "1",
-    name: "Department of Transport",
-    categories: ["Road Issues", "Public Transport", "Traffic Signals", "Parking", "Cycling Infrastructure", "Road Signs"]
-  },
-  {
-    id: "2",
-    name: "Department of Sanitation",
-    categories: ["Waste Management", "Street Cleaning", "Recycling", "Public Toilets"]
-  },
-  {
-    id: "3",
-    name: "Department of Health",
-    categories: ["Hospital Services", "Public Health", "Medical Assistance", "Sanitation"]
-  },
-  {
-    id: "4",
-    name: "Department of Parks",
-    categories: ["Parks & Recreation", "Public Spaces", "Playgrounds", "Sports Facilities"]
-  },
-  {
-    id: "5",
-    name: "Department of Water",
-    categories: ["Water Services", "Drainage", "Flooding", "Water Quality"]
-  },
-  {
-    id: "6",
-    name: "Department of Infrastructure",
-    categories: ["Street Lighting", "Building Safety", "Public Buildings", "Sidewalks"]
-  },
-  {
-    id: "7",
-    name: "Department of Environment",
-    categories: ["Noise Pollution", "Air Quality", "Wildlife", "Environmental Hazards"]
-  }
-];
+interface Agency {
+  id: string;
+  name: string;
+  categories: string[];
+}
 
 const NewComplaint = () => {
   const { currentUser } = useAuth();
@@ -61,10 +28,35 @@ const NewComplaint = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [agencies, setAgencies] = useState<Agency[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAgencies = async () => {
+      try {
+        const response = await fetch('http://localhost:8085/api/agencies');
+        if (!response.ok) {
+          throw new Error('Failed to fetch agencies');
+        }
+        const data = await response.json();
+        setAgencies(data);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load agencies. Please try again later.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAgencies();
+  }, [toast]);
 
   // Get categories based on selected agency
   const availableCategories = selectedAgency 
-    ? mockAgencies.find(a => a.id === selectedAgency)?.categories || []
+    ? agencies.find(a => a.id === selectedAgency)?.categories || []
     : [];
 
   const handleAgencyChange = (value: string) => {
@@ -101,7 +93,7 @@ const NewComplaint = () => {
       });
       return;
     }
-    if (currentUser.userType !== 'citizen') {
+    if (currentUser.userType !== 'CITIZEN') {
       toast({
         title: "Permission Denied",
         description: "Only citizens can submit complaints.",
@@ -111,18 +103,17 @@ const NewComplaint = () => {
     }
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem('token');
       const res = await fetch('http://localhost:8085/api/complaints', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           title,
           description,
           category: selectedCategory,
-          agencyId: Number(selectedAgency)
+          agencyId: selectedAgency,
+          citizenId: currentUser.id
         })
       });
       if (!res.ok) {
@@ -165,7 +156,7 @@ const NewComplaint = () => {
     );
   }
 
-  if (currentUser.userType !== 'citizen') {
+  if (currentUser.userType !== 'CITIZEN') {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <Card className="w-full max-w-md">
@@ -180,6 +171,21 @@ const NewComplaint = () => {
               Go Back
             </Button>
           </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Loading...</CardTitle>
+            <CardDescription>
+              Please wait while we load the agencies.
+            </CardDescription>
+          </CardHeader>
         </Card>
       </div>
     );
@@ -226,7 +232,7 @@ const NewComplaint = () => {
                   <SelectValue placeholder="Select the responsible agency" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockAgencies.map((agency) => (
+                  {agencies.map((agency) => (
                     <SelectItem key={agency.id} value={agency.id}>
                       {agency.name}
                     </SelectItem>
