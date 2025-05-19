@@ -1,0 +1,30 @@
+# Node.js
+node_modules/
+dist/
+build/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env
+.env.*
+
+# Java/Spring Boot
+target/
+*.iml
+*.class
+*.jar
+*.war
+*.ear
+*.log
+
+# OS/IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Misc
+*.local
+*.sublime-workspace
+*.sublime-project 
