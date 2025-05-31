@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Menu, User, LogOut } from "lucide-react";
@@ -15,10 +14,11 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface NavbarProps {
   toggleSidebar: () => void;
+  sidebarOpen: boolean;
   userType: "citizen" | "agency" | null;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, userType }) => {
+const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, sidebarOpen, userType }) => {
   const { currentUser, logout } = useAuth();
   
   return (
@@ -31,6 +31,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, userType }) => {
               size="icon" 
               onClick={toggleSidebar}
               className="text-white hover:bg-gov-darkBlue"
+              aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
             >
               <Menu className="h-5 w-5" />
             </Button>
