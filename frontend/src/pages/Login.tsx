@@ -86,13 +86,6 @@ const Login = () => {
                 />
               </div>
 
-              <div className="text-sm text-gray-500">
-                <p>Demo accounts:</p>
-                <ul className="text-xs">
-                  <li>Citizen: citizen@example.com (any password)</li>
-                  <li>Agency: agency@example.com (any password)</li>
-                </ul>
-              </div>
             </CardContent>
             
             <CardFooter className="flex flex-col space-y-4">

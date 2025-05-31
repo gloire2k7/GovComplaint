@@ -7,50 +7,124 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-// Mock data for citizen complaints
-const mockComplaints = [
-  {
-    id: "C001",
-    title: "Broken Street Light",
-    agency: "Department of Infrastructure",
-    status: "Pending",
-    date: "2025-04-28",
-    category: "Street Lighting"
-  },
-  {
-    id: "C002",
-    title: "Missed Garbage Collection",
-    agency: "Department of Sanitation",
-    status: "Reviewed",
-    date: "2025-05-10",
-    category: "Waste Management"
-  },
-  {
-    id: "C003",
-    title: "Pothole on Main Street",
-    agency: "Department of Transport",
-    status: "Resolved",
-    date: "2025-05-01",
-    category: "Road Issues",
-    response: "The pothole has been filled in. Thank you for your report."
-  },
-  {
-    id: "C004",
-    title: "Noise Complaint",
-    agency: "Department of Environment",
-    status: "Pending",
-    date: "2025-05-15",
-    category: "Noise Pollution"
-  }
-];
+import { useAuth } from "@/contexts/AuthContext";
 
 const CitizenDashboard = () => {
   const { toast } = useToast();
+  const { currentUser } = useAuth();
+  const [complaints, setComplaints] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const pendingCount = mockComplaints.filter(c => c.status === "Pending").length;
-  const reviewedCount = mockComplaints.filter(c => c.status === "Reviewed").length;
-  const resolvedCount = mockComplaints.filter(c => c.status === "Resolved").length;
+  // Modal and form state
+  const [open, setOpen] = useState(false);
+  const [agencies, setAgencies] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [form, setForm] = useState({ 
+    title: "", 
+    agencyId: "", 
+    category: "", 
+    description: "" 
+  });
+
+  // Fetch agencies when modal opens
+  useEffect(() => {
+    if (open) {
+      fetch("http://localhost:8085/api/agencies")
+        .then(res => res.json())
+        .then(data => {
+          setAgencies(data);
+        })
+        .catch(error => {
+          toast({
+            title: "Error",
+            description: "Failed to fetch agencies. Please try again.",
+            variant: "destructive",
+          });
+        });
+    }
+  }, [open]);
+
+  // Fetch categories when agency changes
+  useEffect(() => {
+    if (form.agencyId) {
+      fetch(`http://localhost:8085/api/agencies/${form.agencyId}/categories`)
+        .then(res => res.json())
+        .then(data => setCategories(data))
+        .catch(() => setCategories([]));
+    } else {
+      setCategories([]);
+    }
+  }, [form.agencyId]);
+
+  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleSubmit = async e => {
+    e.preventDefault();
+    try {
+      const response = await fetch("http://localhost:8085/api/complaints", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...form,
+          citizenId: currentUser?.id
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit complaint');
+      }
+
+      toast({
+        title: "Success",
+        description: "Complaint submitted successfully",
+      });
+      setOpen(false);
+      // Refresh complaints list
+      fetchComplaints();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit complaint. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Add function to fetch complaints
+  const fetchComplaints = async () => {
+    if (!currentUser?.id) return;
+    
+    try {
+      const response = await fetch(`http://localhost:8085/api/complaints/citizen/${currentUser.id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch complaints');
+      }
+      const data = await response.json();
+      setComplaints(Array.isArray(data) ? data : []);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch complaints. Please try again.",
+        variant: "destructive",
+      });
+      setComplaints([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch complaints on component mount
+  useEffect(() => {
+    if (currentUser?.id) {
+      fetchComplaints();
+    }
+  }, [currentUser?.id]);
+
+  const pendingCount = complaints.filter(c => c.status === "PENDING").length;
+  const reviewedCount = complaints.filter(c => c.status === "REVIEWED").length;
+  const resolvedCount = complaints.filter(c => c.status === "RESOLVED").length;
   
   const handleViewResponse = (complaint: any) => {
     if (complaint.response) {
@@ -61,44 +135,25 @@ const CitizenDashboard = () => {
     }
   };
 
-  // Modal and form state
-  const [open, setOpen] = useState(false);
-  const [agencies, setAgencies] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [form, setForm] = useState({ title: "", agencyId: "", category: "", description: "" });
-
-  // Fetch agencies when modal opens
-  useEffect(() => {
-    if (open) {
-      fetch("/api/agencies") // Adjust endpoint as per your backend
-        .then(res => res.json())
-        .then(data => setAgencies(data));
-    }
-  }, [open]);
-
-  // Fetch categories when agency changes
-  useEffect(() => {
-    if (form.agencyId) {
-      fetch(`/api/agencies/${form.agencyId}/categories`)
-        .then(res => res.json())
-        .then(data => setCategories(data));
-    } else {
-      setCategories([]);
-    }
-  }, [form.agencyId]);
-
-  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
-
-  const handleSubmit = async e => {
-    e.preventDefault();
-    await fetch("/api/complaints", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    setOpen(false);
-    // Optionally refresh complaints list here
-  };
+  if (!currentUser) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Access Denied</CardTitle>
+            <CardDescription>
+              You need to be logged in to view your dashboard.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center">
+            <Button asChild>
+              <Link to="/login">Log In</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 p-4 md:p-8 max-w-6xl mx-auto">
@@ -158,55 +213,66 @@ const CitizenDashboard = () => {
               </Button>
               <Button asChild variant="outline">
                 <Link to="/complaints">View All Complaints</Link>
-            </Button>
+              </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-muted/50">
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">ID</th>
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Title</th>
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Agency</th>
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Category</th>
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Date</th>
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Status</th>
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mockComplaints.map((complaint) => (
-                  <tr key={complaint.id} className="border-b border-border">
-                    <td className="p-3 text-sm">{complaint.id}</td>
-                    <td className="p-3 text-sm font-medium">{complaint.title}</td>
-                    <td className="p-3 text-sm">{complaint.agency}</td>
-                    <td className="p-3 text-sm">{complaint.category}</td>
-                    <td className="p-3 text-sm">{complaint.date}</td>
-                    <td className="p-3 text-sm">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                        ${complaint.status === 'Resolved' ? 'bg-green-100 text-green-800' : 
-                          complaint.status === 'Reviewed' ? 'bg-blue-100 text-blue-800' : 
-                          'bg-yellow-100 text-yellow-800'}`}>
-                        {complaint.status}
-                      </span>
-                    </td>
-                    <td className="p-3 text-sm">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        disabled={!complaint.response}
-                        onClick={() => handleViewResponse(complaint)}
-                      >
-                        {complaint.response ? "View Response" : "No Response Yet"}
-                      </Button>
-                    </td>
+          {loading ? (
+            <div className="text-center py-4">Loading complaints...</div>
+          ) : complaints.length === 0 ? (
+            <div className="text-center py-4">
+              <p className="text-muted-foreground">No complaints found.</p>
+              <Button variant="link" onClick={() => setOpen(true)}>
+                Submit your first complaint
+              </Button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-muted/50">
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">ID</th>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Title</th>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Agency</th>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Category</th>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Date</th>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Status</th>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {complaints.map((complaint) => (
+                    <tr key={complaint.id} className="border-b border-border">
+                      <td className="p-3 text-sm">{complaint.id}</td>
+                      <td className="p-3 text-sm font-medium">{complaint.title}</td>
+                      <td className="p-3 text-sm">{complaint.agency?.name || 'N/A'}</td>
+                      <td className="p-3 text-sm">{complaint.category}</td>
+                      <td className="p-3 text-sm">{new Date(complaint.createdAt).toLocaleDateString()}</td>
+                      <td className="p-3 text-sm">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                          ${complaint.status === 'RESOLVED' ? 'bg-green-100 text-green-800' : 
+                            complaint.status === 'REVIEWED' ? 'bg-blue-100 text-blue-800' : 
+                            'bg-yellow-100 text-yellow-800'}`}>
+                          {complaint.status}
+                        </span>
+                      </td>
+                      <td className="p-3 text-sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          disabled={!complaint.response}
+                          onClick={() => handleViewResponse(complaint)}
+                        >
+                          {complaint.response ? "View Response" : "No Response Yet"}
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -235,7 +301,7 @@ const CitizenDashboard = () => {
               <SelectContent>
                 {agencies.map(agency => (
                   <SelectItem key={agency.id} value={agency.id}>
-                    {agency.agencyName}
+                    {agency.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -244,10 +310,10 @@ const CitizenDashboard = () => {
               value={form.category}
               onValueChange={value => setForm(f => ({ ...f, category: value }))}
               required
-              disabled={!form.agencyId}
+              disabled={!form.agencyId || categories.length === 0}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select Category" />
+                <SelectValue placeholder={categories.length === 0 ? "No categories available" : "Select Category"} />
               </SelectTrigger>
               <SelectContent>
                 {categories.map(category => (
@@ -265,7 +331,7 @@ const CitizenDashboard = () => {
               required
             />
             <DialogFooter>
-              <Button type="submit">Submit</Button>
+              <Button type="submit">Submit Complaint</Button>
             </DialogFooter>
           </form>
         </DialogContent>

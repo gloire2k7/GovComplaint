@@ -23,7 +23,7 @@ public class AuthService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    public Object registerCitizen(String email, String password, String fullName) {
+    public Object registerCitizen(String email, String password, String displayName) {
         if (citizenRepository.existsByEmail(email)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already registered");
         }
@@ -31,7 +31,7 @@ public class AuthService {
         citizen.setEmail(email);
         citizen.setPassword(passwordEncoder.encode(password));
         citizen.setUserType("CITIZEN");
-        citizen.setFullName(fullName);
+        citizen.setFullName(displayName);
         citizen = citizenRepository.save(citizen);
         return new SimpleUserDTO(citizen.getId().toString(), citizen.getEmail(), citizen.getUserType(), citizen.getFullName());
     }

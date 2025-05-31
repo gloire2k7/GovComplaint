@@ -11,8 +11,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/auth")
-//@CrossOrigin(origins = {"http://localhost:5173, http://localhost:8080"})
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = {"http://localhost:8080", "http://localhost:5173"}, allowCredentials = "true")
 public class AuthController {
 
     @Autowired
@@ -27,11 +26,11 @@ public class AuthController {
         if (userType.equals("CITIZEN")) {
             String email = (String) body.get("email");
             String password = (String) body.get("password");
-            String fullName = (String) body.get("fullName");
-            if (email == null || password == null || fullName == null) {
+            String displayName = (String) body.get("displayName");
+            if (email == null || password == null || displayName == null) {
                 return ResponseEntity.badRequest().body(Map.of("message", "Missing required fields for citizen"));
             }
-            return ResponseEntity.ok(authService.registerCitizen(email, password, fullName));
+            return ResponseEntity.ok(authService.registerCitizen(email, password, displayName));
         } else if (userType.equals("AGENCY")) {
             try {
                 String email = (String) body.get("email");

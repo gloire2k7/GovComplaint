@@ -1,27 +1,63 @@
-# Node.js
+# Dependencies
 node_modules/
-dist/
-build/
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Production
+/build
+/dist
+
+# Misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.env
-.env.*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Spring Boot
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# Compiled class file
+*.class
+
+# Log file
+*.log
+
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
 
 # Java/Spring Boot
-target/
 *.iml
-*.class
 *.jar
 *.war
 *.ear
 *.log
 
 # OS/IDE
-.DS_Store
 Thumbs.db
-.idea/
-.vscode/
 *.swp
 
 # Misc

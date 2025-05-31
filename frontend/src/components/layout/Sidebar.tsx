@@ -14,7 +14,7 @@ const Sidebar: React.FC<SidebarProps> = ({ userType, isOpen }) => {
   const isMobile = useIsMobile();
 
   const citizenLinks = [
-    { to: "/dashboard", icon: <Home size={20} />, label: "Dashboard" },
+    { to: "/dashboard/citizen", icon: <Home size={20} />, label: "Dashboard" },
     { to: "/complaints/new", icon: <FileText size={20} />, label: "New Complaint" },
     { to: "/complaints", icon: <Search size={20} />, label: "My Complaints" },
     { to: "/notifications", icon: <Bell size={20} />, label: "Notifications" },
@@ -22,7 +22,7 @@ const Sidebar: React.FC<SidebarProps> = ({ userType, isOpen }) => {
   ];
 
   const agencyLinks = [
-    { to: "/dashboard", icon: <Home size={20} />, label: "Dashboard" },
+    { to: "//dashboard/agency", icon: <Home size={20} />, label: "Dashboard" },
     { to: "/complaints", icon: <Search size={20} />, label: "Complaints" },
     { to: "/categories", icon: <FileText size={20} />, label: "Categories" },
     { to: "/reviews", icon: <CheckSquare size={20} />, label: "Reviews" },
