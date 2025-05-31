@@ -15,6 +15,8 @@ const CitizenComplaintsList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [responseModalOpen, setResponseModalOpen] = useState(false);
   const [selectedComplaint, setSelectedComplaint] = useState<any>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const complaintsPerPage = 10;
 
   useEffect(() => {
     if (!currentUser) return;
@@ -36,6 +38,13 @@ const CitizenComplaintsList = () => {
   const filteredComplaints = complaints.filter(complaint =>
     complaint.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (complaint.description && complaint.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredComplaints.length / complaintsPerPage);
+  const paginatedComplaints = filteredComplaints.slice(
+    (currentPage - 1) * complaintsPerPage,
+    currentPage * complaintsPerPage
   );
 
   const handleViewResponse = (complaint: any) => {
@@ -72,47 +81,71 @@ const CitizenComplaintsList = () => {
           ) : filteredComplaints.length === 0 ? (
             <div>No complaints found.</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-muted/50">
-                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">ID</th>
-                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Title</th>
-                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Category</th>
-                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Date</th>
-                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Status</th>
-                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredComplaints.map(complaint => (
-                    <tr key={complaint.id} className="border-b border-border">
-                      <td className="p-3 text-sm">{complaint.id}</td>
-                      <td className="p-3 text-sm font-medium">{complaint.title}</td>
-                      <td className="p-3 text-sm">{complaint.category}</td>
-                      <td className="p-3 text-sm">{new Date(complaint.createdAt).toLocaleDateString()}</td>
-                      <td className="p-3 text-sm">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                          ${complaint.complaintStatus === 'APPROVED' ? 'bg-green-100 text-green-800' :
-                            complaint.complaintStatus === 'REJECTED' ? 'bg-red-100 text-red-800' :
-                            'bg-yellow-100 text-yellow-800'}`}>
-                          {complaint.complaintStatus}
-                        </span>
-                      </td>
-                      <td className="p-3 text-sm">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewResponse(complaint)}
-                        >
-                          View Response
-                        </Button>
-                      </td>
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-muted/50">
+                      <th className="text-left p-3 text-sm font-medium text-muted-foreground">ID</th>
+                      <th className="text-left p-3 text-sm font-medium text-muted-foreground">Title</th>
+                      <th className="text-left p-3 text-sm font-medium text-muted-foreground">Category</th>
+                      <th className="text-left p-3 text-sm font-medium text-muted-foreground">Date</th>
+                      <th className="text-left p-3 text-sm font-medium text-muted-foreground">Status</th>
+                      <th className="text-left p-3 text-sm font-medium text-muted-foreground">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {paginatedComplaints.map(complaint => (
+                      <tr key={complaint.id} className="border-b border-border">
+                        <td className="p-3 text-sm">{complaint.id}</td>
+                        <td className="p-3 text-sm font-medium">{complaint.title}</td>
+                        <td className="p-3 text-sm">{complaint.category}</td>
+                        <td className="p-3 text-sm">{new Date(complaint.createdAt).toLocaleDateString()}</td>
+                        <td className="p-3 text-sm">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                            ${complaint.complaintStatus === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                              complaint.complaintStatus === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                              'bg-yellow-100 text-yellow-800'}`}>
+                            {complaint.complaintStatus}
+                          </span>
+                        </td>
+                        <td className="p-3 text-sm">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewResponse(complaint)}
+                          >
+                            View Response
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {/* Pagination Controls */}
+              <div className="flex justify-between items-center mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

@@ -13,22 +13,21 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Hero Section */}
-      <section className="bg-gov-blue text-white py-20">
+      <section className="bg-gradient-to-br from-blue-100 via-blue-200 to-blue-400 text-gov-darkBlue py-20 animate-fadeIn">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 opacity-0 animate-slideUp">
             Government Complaint Management System
           </h1>
-          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
+          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto opacity-0 animate-slideUp delay-200">
             A direct channel to submit and track your complaints to government agencies
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            
-                <Button asChild className="text-lg bg-white text-gov-blue hover:bg-gray-200">
-                  <Link to="/register">Register Now</Link>
-                </Button>
-                <Button asChild variant="outline" className="text-lg bg-white text-gov-blue hover:bg-gray-200">
-                  <Link to="/login">Login</Link>
-                </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center opacity-0 animate-slideUp delay-400">
+            <Button asChild className="text-lg bg-white text-gov-blue hover:bg-gray-200 shadow-lg transition-transform duration-300 hover:scale-105">
+              <Link to="/register">Register Now</Link>
+            </Button>
+            <Button asChild variant="outline" className="text-lg bg-white text-gov-blue hover:bg-gray-200 shadow-lg transition-transform duration-300 hover:scale-105">
+              <Link to="/login">Login</Link>
+            </Button>
           </div>
         </div>
       </section>
