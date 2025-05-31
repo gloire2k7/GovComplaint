@@ -17,11 +17,11 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
 import Categories from "./pages/Categories";
+import ComplaintsRouter from "./pages/ComplaintsRouter";
 
 // Layout
 import MainLayout from "./components/layout/MainLayout";
-import CitizenDashboard from "./components/dashboard/CitizenDashboard";
-import AgencyDashboard from "./components/dashboard/AgencyDashboard";
+import DashboardRouter from "./components/dashboard/DashboardRouter";
 
 const queryClient = new QueryClient();
 
@@ -42,11 +42,10 @@ const App = () => {
               {/* Protected routes */}
               <Route element={<MainLayout />}>
                 {/* Role-based dashboards */}
-                <Route path="/dashboard/citizen" element={<CitizenDashboard />} />
-                <Route path="/dashboard/agency" element={<AgencyDashboard />} />
+                <Route path="/dashboard" element={<DashboardRouter />} />
               
                 {/* Other protected routes */}
-                <Route path="/complaints" element={<ComplaintsList />} />
+                <Route path="/complaints" element={<ComplaintsRouter />} />
                 <Route path="/complaints/new" element={<NewComplaint />} />
                 <Route path="/complaints/review/:id" element={<ReviewComplaint />} />
                 <Route path="/profile" element={<Profile />} />

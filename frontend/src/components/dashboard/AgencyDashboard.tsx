@@ -1,62 +1,38 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { FileText, CheckSquare, Clock, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-// Mock data for agency complaints
-const mockComplaints = [
-  {
-    id: "C001",
-    title: "Broken Street Light on Oak Avenue",
-    citizen: "John Doe",
-    status: "Pending",
-    date: "2025-05-14",
-    category: "Street Lighting"
-  },
-  {
-    id: "C002",
-    title: "Traffic Signal Not Working",
-    citizen: "Alice Smith",
-    status: "Reviewed",
-    date: "2025-05-13",
-    category: "Traffic Signals"
-  },
-  {
-    id: "C003",
-    title: "Pothole on Main Street",
-    citizen: "Robert Johnson",
-    status: "Reviewed",
-    date: "2025-05-12",
-    category: "Road Issues"
-  },
-  {
-    id: "C004",
-    title: "Bus Stop Damaged",
-    citizen: "Emily Brown",
-    status: "Pending",
-    date: "2025-05-10",
-    category: "Public Transport"
-  },
-  {
-    id: "C005",
-    title: "Parking Meter Issue",
-    citizen: "Michael Wilson",
-    status: "Resolved",
-    date: "2025-05-08",
-    category: "Parking",
-    response: "The parking meter has been repaired and is now fully functional."
-  }
-];
+import { useAuth } from "@/contexts/AuthContext";
 
 const AgencyDashboard = () => {
   const { toast } = useToast();
+  const { currentUser } = useAuth();
+  const [complaints, setComplaints] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const pendingCount = mockComplaints.filter(c => c.status === "Pending").length;
-  const reviewedCount = mockComplaints.filter(c => c.status === "Reviewed").length;
-  const resolvedCount = mockComplaints.filter(c => c.status === "Resolved").length;
-  
+  useEffect(() => {
+    if (!currentUser) return;
+    const fetchComplaints = async () => {
+      try {
+        const res = await fetch(`http://localhost:8085/api/complaints/agency/${currentUser.id}`);
+        if (!res.ok) throw new Error("Failed to fetch complaints");
+        const data = await res.json();
+        setComplaints(Array.isArray(data) ? data : []);
+      } catch (err: any) {
+        toast({ title: "Error", description: err.message, variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchComplaints();
+  }, [currentUser, toast]);
+
+  const pendingCount = complaints.filter(c => c.complaintStatus === "PENDING").length;
+  const reviewedCount = complaints.filter(c => c.complaintStatus === "REVIEWED").length;
+  const resolvedCount = complaints.filter(c => c.complaintStatus === "APPROVED").length;
+
   const handleReviewComplaint = (complaint: any) => {
     toast({
       title: "Complaint Review",
@@ -65,7 +41,7 @@ const AgencyDashboard = () => {
   };
 
   // Group complaints by category for the chart
-  const complaintsByCategory = mockComplaints.reduce((acc: Record<string, number>, complaint) => {
+  const complaintsByCategory = complaints.reduce((acc: Record<string, number>, complaint: any) => {
     acc[complaint.category] = (acc[complaint.category] || 0) + 1;
     return acc;
   }, {});
@@ -104,7 +80,7 @@ const AgencyDashboard = () => {
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-medium flex items-center">
               <CheckSquare className="w-5 h-5 mr-2 text-green-600" />
-              Resolved
+              Approved
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -163,19 +139,19 @@ const AgencyDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {mockComplaints.map((complaint) => (
+                {complaints.map((complaint) => (
                   <tr key={complaint.id} className="border-b border-border">
                     <td className="p-3 text-sm">{complaint.id}</td>
                     <td className="p-3 text-sm font-medium">{complaint.title}</td>
-                    <td className="p-3 text-sm">{complaint.citizen}</td>
+                    <td className="p-3 text-sm">{complaint.citizenName || 'N/A'}</td>
                     <td className="p-3 text-sm">{complaint.category}</td>
-                    <td className="p-3 text-sm">{complaint.date}</td>
+                    <td className="p-3 text-sm">{new Date(complaint.createdAt).toLocaleDateString()}</td>
                     <td className="p-3 text-sm">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                        ${complaint.status === 'Resolved' ? 'bg-green-100 text-green-800' : 
-                          complaint.status === 'Reviewed' ? 'bg-blue-100 text-blue-800' : 
+                        ${complaint.complaintStatus === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                          complaint.complaintStatus === 'REJECTED' ? 'bg-red-100 text-red-800' :
                           'bg-yellow-100 text-yellow-800'}`}>
-                        {complaint.status}
+                        {complaint.complaintStatus}
                       </span>
                     </td>
                     <td className="p-3 text-sm">

@@ -105,11 +105,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       
       // Navigate based on user type from the response
-      if (userData.userType === "CITIZEN") {
-        navigate('/dashboard/citizen');
-      } else if (userData.userType === "AGENCY") {
-        navigate('/dashboard/agency');
-      }
+      navigate('/dashboard');
     } catch (error: any) {
       toast({
         title: "Login Failed",
@@ -149,11 +145,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       
       // Navigate based on user type
-      if (newUser.userType === "CITIZEN") {
-        navigate('/dashboard/citizen');
-      } else if (newUser.userType === "AGENCY") {
-        navigate('/dashboard/agency');
-      }
+      navigate('/dashboard');
     } catch (error: any) {
       toast({
         title: "Registration Failed",
