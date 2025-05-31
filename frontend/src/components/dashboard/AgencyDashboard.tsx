@@ -102,8 +102,8 @@ const AgencyDashboard = () => {
               <div key={category} className="flex items-center justify-between">
                 <span className="font-medium">{category}</span>
                 <div className="flex items-center space-x-2">
-                  <div className="bg-gov-blue h-2 rounded-full" style={{ width: `${count * 30}px` }}></div>
-                  <span className="text-sm text-muted-foreground">{count}</span>
+                  <div className="bg-gov-blue h-2 rounded-full" style={{ width: `${Number(count) * 30}px` }}></div>
+                  <span className="text-sm text-muted-foreground">{String(count)}</span>
                 </div>
               </div>
             ))}

@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -11,6 +14,13 @@ const AgencyComplaintsList = () => {
   const [complaints, setComplaints] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [selectedComplaint, setSelectedComplaint] = useState<any>(null);
+  const [response, setResponse] = useState("");
+  const [status, setStatus] = useState("REVIEWED");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -29,17 +39,48 @@ const AgencyComplaintsList = () => {
     fetchComplaints();
   }, [currentUser, toast]);
 
-  const filteredComplaints = complaints.filter(complaint =>
-    complaint.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (complaint.description && complaint.description.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  // Get unique categories
+  const categories = Array.from(new Set(complaints.map(c => c.category)));
 
-  const handleViewResponse = (complaint: any) => {
-    if (complaint.response) {
-      toast({
-        title: `Response for #${complaint.id}`,
-        description: complaint.response,
+  // Filter complaints
+  const filteredComplaints = complaints.filter(complaint => {
+    const matchesSearch =
+      complaint.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (complaint.description && complaint.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesCategory = categoryFilter === "all" || complaint.category === categoryFilter;
+    const matchesStatus = statusFilter === "all" || complaint.complaintStatus === statusFilter;
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
+
+  const handleOpenReview = (complaint: any) => {
+    setSelectedComplaint(complaint);
+    setResponse(complaint.response || "");
+    setStatus(complaint.complaintStatus || "REVIEWED");
+    setReviewModalOpen(true);
+  };
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedComplaint) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`http://localhost:8085/api/complaints/${selectedComplaint.id}/status?agencyId=${currentUser.id}&status=${status}&response=${encodeURIComponent(response)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
       });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to submit review");
+      }
+      toast({ title: "Review Submitted", description: `Complaint #${selectedComplaint.id} has been updated.` });
+      setReviewModalOpen(false);
+      // Refresh complaints
+      const updated = await res.json();
+      setComplaints(prev => prev.map(c => c.id === updated.id ? updated : c));
+    } catch (error: any) {
+      toast({ title: "Submission Failed", description: error.message, variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -59,13 +100,36 @@ const AgencyComplaintsList = () => {
           <CardDescription>All complaints submitted to your agency</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-4">
+          <div className="mb-4 flex flex-wrap gap-4 items-center">
             <Input
               placeholder="Search complaints..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="max-w-xs"
             />
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map(category => (
+                  <SelectItem key={category} value={category}>{category}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="PENDING">Pending</SelectItem>
+                <SelectItem value="REVIEWED">Reviewed</SelectItem>
+                <SelectItem value="APPROVED">Approved</SelectItem>
+                <SelectItem value="REJECTED">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           {loading ? (
             <div>Loading...</div>
@@ -105,10 +169,9 @@ const AgencyComplaintsList = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          disabled={!complaint.response}
-                          onClick={() => handleViewResponse(complaint)}
+                          onClick={() => handleOpenReview(complaint)}
                         >
-                          {complaint.response ? "View Response" : "No Response Yet"}
+                          Review
                         </Button>
                       </td>
                     </tr>
@@ -119,6 +182,63 @@ const AgencyComplaintsList = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Review Modal */}
+      <Dialog open={reviewModalOpen} onOpenChange={setReviewModalOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Review Complaint</DialogTitle>
+          </DialogHeader>
+          {selectedComplaint && (
+            <form onSubmit={handleSubmitReview} className="space-y-4">
+              <div>
+                <strong>Title:</strong> {selectedComplaint.title}
+              </div>
+              <div>
+                <strong>Description:</strong> {selectedComplaint.description}
+              </div>
+              <div>
+                <strong>Category:</strong> {selectedComplaint.category}
+              </div>
+              <div>
+                <strong>Citizen:</strong> {selectedComplaint.citizenName || 'N/A'}
+              </div>
+              <div className="space-y-2">
+                <label>Status</label>
+                <Select value={status} onValueChange={setStatus} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PENDING">Pending</SelectItem>
+                    <SelectItem value="REVIEWED">Reviewed</SelectItem>
+                    <SelectItem value="APPROVED">Approved</SelectItem>
+                    <SelectItem value="REJECTED">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label>Response Message</label>
+                <Textarea
+                  value={response}
+                  onChange={e => setResponse(e.target.value)}
+                  placeholder="Write your response to the citizen..."
+                  rows={4}
+                  required={status !== "PENDING"}
+                />
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setReviewModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Submitting..." : "Submit Review"}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

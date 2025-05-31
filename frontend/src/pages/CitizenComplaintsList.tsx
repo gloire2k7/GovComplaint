@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +13,8 @@ const CitizenComplaintsList = () => {
   const [complaints, setComplaints] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [responseModalOpen, setResponseModalOpen] = useState(false);
+  const [selectedComplaint, setSelectedComplaint] = useState<any>(null);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -36,12 +39,8 @@ const CitizenComplaintsList = () => {
   );
 
   const handleViewResponse = (complaint: any) => {
-    if (complaint.response) {
-      toast({
-        title: `Response for #${complaint.id}`,
-        description: complaint.response,
-      });
-    }
+    setSelectedComplaint(complaint);
+    setResponseModalOpen(true);
   };
 
   if (!currentUser) {
@@ -51,8 +50,8 @@ const CitizenComplaintsList = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold mb-2">My Complaints</h1>
-        <p className="text-gray-600">Track and manage your submitted complaints</p>
+        <h1 className="text-3xl font-bold mb-2">Your Complaints</h1>
+        <p className="text-gray-600">Complaints you have submitted</p>
       </div>
       <Card>
         <CardHeader>
@@ -79,7 +78,6 @@ const CitizenComplaintsList = () => {
                   <tr className="bg-muted/50">
                     <th className="text-left p-3 text-sm font-medium text-muted-foreground">ID</th>
                     <th className="text-left p-3 text-sm font-medium text-muted-foreground">Title</th>
-                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Agency</th>
                     <th className="text-left p-3 text-sm font-medium text-muted-foreground">Category</th>
                     <th className="text-left p-3 text-sm font-medium text-muted-foreground">Date</th>
                     <th className="text-left p-3 text-sm font-medium text-muted-foreground">Status</th>
@@ -91,7 +89,6 @@ const CitizenComplaintsList = () => {
                     <tr key={complaint.id} className="border-b border-border">
                       <td className="p-3 text-sm">{complaint.id}</td>
                       <td className="p-3 text-sm font-medium">{complaint.title}</td>
-                      <td className="p-3 text-sm">{complaint.agencyName || 'N/A'}</td>
                       <td className="p-3 text-sm">{complaint.category}</td>
                       <td className="p-3 text-sm">{new Date(complaint.createdAt).toLocaleDateString()}</td>
                       <td className="p-3 text-sm">
@@ -106,10 +103,9 @@ const CitizenComplaintsList = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          disabled={!complaint.response}
                           onClick={() => handleViewResponse(complaint)}
                         >
-                          {complaint.response ? "View Response" : "No Response Yet"}
+                          View Response
                         </Button>
                       </td>
                     </tr>
@@ -120,6 +116,39 @@ const CitizenComplaintsList = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Response Modal */}
+      <Dialog open={responseModalOpen} onOpenChange={setResponseModalOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Complaint Response</DialogTitle>
+          </DialogHeader>
+          {selectedComplaint && (
+            <div className="space-y-4">
+              <div>
+                <strong>Title:</strong> {selectedComplaint.title}
+              </div>
+              <div>
+                <strong>Description:</strong> {selectedComplaint.description}
+              </div>
+              <div>
+                <strong>Category:</strong> {selectedComplaint.category}
+              </div>
+              <div>
+                <strong>Status:</strong> {selectedComplaint.complaintStatus}
+              </div>
+              <div>
+                <strong>Response:</strong> {selectedComplaint.response || "No response yet."}
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setResponseModalOpen(false)}>
+                  Close
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
