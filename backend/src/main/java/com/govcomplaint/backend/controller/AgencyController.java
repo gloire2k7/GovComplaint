@@ -15,7 +15,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/agencies")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = {"http://localhost:8080", "http://localhost:5173"}, allowCredentials = "true")
 public class AgencyController {
 
     @Autowired
@@ -25,18 +25,28 @@ public class AgencyController {
     private AgencyCategoryRepository agencyCategoryRepository;
 
     @GetMapping
-    public ResponseEntity<List<Map<String, Object>>> getAllAgencies() {
-        List<Agency> agencies = agencyRepository.findAll();
-        List<Map<String, Object>> agencyDtos = agencies.stream()
-            .map(agency -> Map.of(
-                "id", agency.getId(),
-                "name", agency.getAgencyName(),
-                "categories", agency.getCategories().stream()
-                    .map(AgencyCategory::getCategoryName)
-                    .collect(Collectors.toList())
-            ))
-            .collect(Collectors.toList());
-        return ResponseEntity.ok(agencyDtos);
+    public ResponseEntity<?> getAllAgencies() {
+        try {
+            List<Agency> agencies = agencyRepository.findAll();
+            List<Map<String, Object>> agencyDtos = agencies.stream()
+                .map(agency -> Map.of(
+                    "id", agency.getId(),
+                    "name", agency.getAgencyName(),
+                    "categories", agency.getCategories() == null ? List.of() :
+                        agency.getCategories().stream()
+                            .map(cat -> cat != null ? cat.getCategoryName() : null)
+                            .filter(catName -> catName != null)
+                            .collect(Collectors.toList())
+                ))
+                .collect(Collectors.toList());
+            return ResponseEntity.ok(agencyDtos);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of(
+                "error", "Failed to fetch agencies",
+                "details", e.getMessage()
+            ));
+        }
     }
 
     @GetMapping("/{id}/categories")

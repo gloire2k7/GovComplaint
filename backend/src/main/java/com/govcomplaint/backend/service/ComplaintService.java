@@ -86,10 +86,10 @@ public class ComplaintService {
         dto.setCategory(c.getCategory());
         dto.setComplaintStatus(c.getComplaintStatus());
         dto.setResponse(c.getResponse());
-        dto.setAgencyName(c.getAgency().getAgencyName());
-        dto.setAgencyId(c.getAgency().getId());
-        dto.setCitizenName(c.getCitizen().getFullName());
-        dto.setCitizenId(c.getCitizen().getId());
+        dto.setAgencyName(c.getAgency() != null ? c.getAgency().getAgencyName() : null);
+        dto.setAgencyId(c.getAgency() != null ? c.getAgency().getId() : null);
+        dto.setCitizenName(c.getCitizen() != null ? c.getCitizen().getFullName() : null);
+        dto.setCitizenId(c.getCitizen() != null ? c.getCitizen().getId() : null);
         dto.setCreatedAt(c.getCreatedAt());
         dto.setUpdatedAt(c.getUpdatedAt());
         return dto;

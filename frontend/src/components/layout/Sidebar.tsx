@@ -22,7 +22,7 @@ const Sidebar: React.FC<SidebarProps> = ({ userType, isOpen }) => {
   ];
 
   const agencyLinks = [
-    { to: "//dashboard/agency", icon: <Home size={20} />, label: "Dashboard" },
+    { to: "/dashboard/agency", icon: <Home size={20} />, label: "Dashboard" },
     { to: "/complaints", icon: <Search size={20} />, label: "Complaints" },
     { to: "/categories", icon: <FileText size={20} />, label: "Categories" },
     { to: "/reviews", icon: <CheckSquare size={20} />, label: "Reviews" },

@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 const CitizenDashboard = () => {
   const { toast } = useToast();
@@ -23,7 +25,8 @@ const CitizenDashboard = () => {
     title: "", 
     agencyId: "", 
     category: "", 
-    description: "" 
+    description: "",
+    location: ""
   });
 
   // Fetch agencies when modal opens
@@ -32,9 +35,14 @@ const CitizenDashboard = () => {
       fetch("http://localhost:8085/api/agencies")
         .then(res => res.json())
         .then(data => {
-          setAgencies(data);
+          if (Array.isArray(data)) {
+            setAgencies(data);
+          } else {
+            setAgencies([]);
+          }
         })
         .catch(error => {
+          setAgencies([]); // fallback to empty array
           toast({
             title: "Error",
             description: "Failed to fetch agencies. Please try again.",
@@ -56,9 +64,11 @@ const CitizenDashboard = () => {
     }
   }, [form.agencyId]);
 
-  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const response = await fetch("http://localhost:8085/api/complaints", {
@@ -81,6 +91,14 @@ const CitizenDashboard = () => {
         description: "Complaint submitted successfully",
       });
       setOpen(false);
+      // Reset form
+      setForm({ 
+        title: "", 
+        agencyId: "", 
+        category: "", 
+        description: "",
+        location: ""
+      });
       // Refresh complaints list
       fetchComplaints();
     } catch (error) {
@@ -246,15 +264,15 @@ const CitizenDashboard = () => {
                     <tr key={complaint.id} className="border-b border-border">
                       <td className="p-3 text-sm">{complaint.id}</td>
                       <td className="p-3 text-sm font-medium">{complaint.title}</td>
-                      <td className="p-3 text-sm">{complaint.agency?.name || 'N/A'}</td>
+                      <td className="p-3 text-sm">{complaint.agencyName || 'N/A'}</td>
                       <td className="p-3 text-sm">{complaint.category}</td>
                       <td className="p-3 text-sm">{new Date(complaint.createdAt).toLocaleDateString()}</td>
                       <td className="p-3 text-sm">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                          ${complaint.status === 'RESOLVED' ? 'bg-green-100 text-green-800' : 
-                            complaint.status === 'REVIEWED' ? 'bg-blue-100 text-blue-800' : 
+                          ${complaint.complaintStatus === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                            complaint.complaintStatus === 'REJECTED' ? 'bg-red-100 text-red-800' :
                             'bg-yellow-100 text-yellow-800'}`}>
-                          {complaint.status}
+                          {complaint.complaintStatus}
                         </span>
                       </td>
                       <td className="p-3 text-sm">
@@ -278,59 +296,85 @@ const CitizenDashboard = () => {
 
       {/* Create Complaint Modal */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Create Complaint</DialogTitle>
+            <DialogTitle>Create New Complaint</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              name="title"
-              placeholder="Title"
-              value={form.title}
-              onChange={handleChange}
-              required
-            />
-            <Select
-              value={form.agencyId}
-              onValueChange={value => setForm(f => ({ ...f, agencyId: value, category: "" }))}
-              required
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select Agency" />
-              </SelectTrigger>
-              <SelectContent>
-                {agencies.map(agency => (
-                  <SelectItem key={agency.id} value={agency.id}>
-                    {agency.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={form.category}
-              onValueChange={value => setForm(f => ({ ...f, category: value }))}
-              required
-              disabled={!form.agencyId || categories.length === 0}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={categories.length === 0 ? "No categories available" : "Select Category"} />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map(category => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Input
-              name="description"
-              placeholder="Description"
-              value={form.description}
-              onChange={handleChange}
-              required
-            />
+            <div className="space-y-2">
+              <Label htmlFor="title">Title</Label>
+              <Input
+                id="title"
+                name="title"
+                placeholder="Enter complaint title"
+                value={form.title}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="agencyId">Agency</Label>
+              <Select
+                value={form.agencyId}
+                onValueChange={value => setForm(f => ({ ...f, agencyId: value, category: "" }))}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Agency" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.isArray(agencies) && agencies.length > 0 ? (
+                    agencies.map(agency => (
+                      <SelectItem key={agency.id} value={agency.id}>
+                        {agency.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="p-2 text-muted-foreground">No agencies available</div>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <Select
+                value={form.category}
+                onValueChange={value => setForm(f => ({ ...f, category: value }))}
+                required
+                disabled={!form.agencyId || categories.length === 0}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={categories.length === 0 ? "No categories available" : "Select Category"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map(category => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                name="description"
+                placeholder="Enter detailed description"
+                value={form.description}
+                onChange={handleChange}
+                required
+                rows={4}
+              />
+            </div>
+
             <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
               <Button type="submit">Submit Complaint</Button>
             </DialogFooter>
           </form>
