@@ -282,7 +282,7 @@ const CitizenDashboard = () => {
                           disabled={!complaint.response}
                           onClick={() => handleViewResponse(complaint)}
                         >
-                          {complaint.response ? "View Response" : "No Response Yet"}
+                          <Link to="/complaints">View Response</Link>
                         </Button>
                       </td>
                     </tr>

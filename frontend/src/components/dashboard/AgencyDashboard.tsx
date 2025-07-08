@@ -158,9 +158,8 @@ const AgencyDashboard = () => {
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        onClick={() => handleReviewComplaint(complaint)}
                       >
-                        Review
+                        <Link to="/complaints">Review</Link>
                       </Button>
                     </td>
                   </tr>
