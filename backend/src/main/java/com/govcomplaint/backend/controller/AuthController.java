@@ -1,6 +1,7 @@
 package com.govcomplaint.backend.controller;
 
 import com.govcomplaint.backend.service.AuthService;
+import com.govcomplaint.backend.repository.CitizenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,8 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
+    @Autowired
+    private CitizenRepository citizenRepository;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Map<String, Object> body) {
@@ -63,5 +66,17 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("message", "Email and password are required"));
         }
         return ResponseEntity.ok(authService.login(email, password));
+    }
+
+    @GetMapping("/citizens/{id}")
+    public ResponseEntity<?> getCitizenById(@PathVariable("id") java.util.UUID id) {
+        return citizenRepository.findById(id)
+            .map(citizen -> ResponseEntity.ok(Map.of(
+                "id", citizen.getId(),
+                "fullName", citizen.getFullName(),
+                "email", citizen.getEmail(),
+                "userType", citizen.getUserType()
+            )))
+            .orElse(ResponseEntity.notFound().build());
     }
 } 

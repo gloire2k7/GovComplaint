@@ -41,7 +41,7 @@ const Register = () => {
     };
 
     if (userType === 'CITIZEN') {
-      payload.fullName = displayName;
+      payload.displayName = displayName;
     } else if (userType === 'AGENCY') {
       payload.agencyName = agencyName;
       payload.categories = categories;

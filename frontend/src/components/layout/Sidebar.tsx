@@ -15,18 +15,14 @@ const Sidebar: React.FC<SidebarProps> = ({ userType, sidebarOpen, toggleSidebar 
 
   const citizenLinks = [
     { to: "/dashboard", icon: <Home size={20} />, label: "Dashboard" },
-    { to: "/complaints/new", icon: <FileText size={20} />, label: "New Complaint" },
-    { to: "/complaints", icon: <Search size={20} />, label: "My Complaints" },
-    { to: "/notifications", icon: <Bell size={20} />, label: "Notifications" },
-    { to: "/settings", icon: <Settings size={20} />, label: "Settings" },
+    { to: "/complaints", icon: <FileText size={20} />, label: "Complaints" },
+    { to: "/profile", icon: <Settings size={20} />, label: "Settings" },
   ];
 
   const agencyLinks = [
     { to: "/dashboard", icon: <Home size={20} />, label: "Dashboard" },
-    { to: "/complaints", icon: <Search size={20} />, label: "Complaints" },
-    { to: "/categories", icon: <FileText size={20} />, label: "Categories" },
-    { to: "/reviews", icon: <CheckSquare size={20} />, label: "Reviews" },
-    { to: "/settings", icon: <Settings size={20} />, label: "Settings" },
+    { to: "/complaints", icon: <FileText size={20} />, label: "Complaints" },
+    { to: "/profile", icon: <Settings size={20} />, label: "Settings" },
   ];
 
   const links = userType === "citizen" ? citizenLinks : agencyLinks;
@@ -36,7 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({ userType, sidebarOpen, toggleSidebar 
   return (
     <aside
       className={cn(
-        "bg-gov-darkBlue text-white fixed h-screen top-0 left-0 overflow-y-auto transition-all duration-300 z-20 flex flex-col w-64",
+        "bg-gov-darkBlue text-white fixed h-screen top-0 left-0 overflow-y-auto transition-all duration-300 z-20 flex flex-col w-64 mt-16",
       )}
       style={{ minHeight: '100vh' }}
     >

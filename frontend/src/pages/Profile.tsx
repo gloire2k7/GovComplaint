@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,6 +6,34 @@ import { Link } from "react-router-dom";
 
 const Profile = () => {
   const { currentUser } = useAuth();
+  const [userInfo, setUserInfo] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    setLoading(true);
+    const fetchUserInfo = async () => {
+      try {
+        let url = "";
+        if (currentUser.userType === "CITIZEN") {
+          url = `/api/auth/citizens/${currentUser.id}`;
+        } else if (currentUser.userType === "AGENCY") {
+          url = `/api/agencies/${currentUser.id}`;
+        }
+        const res = await fetch(url.startsWith("/api") ? `http://localhost:8085${url}` : url, {
+          credentials: "include"
+        });
+        if (!res.ok) throw new Error("Failed to fetch user info");
+        const data = await res.json();
+        setUserInfo(data);
+      } catch (err) {
+        setUserInfo(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUserInfo();
+  }, [currentUser]);
 
   if (!currentUser) {
     return (
@@ -28,6 +55,13 @@ const Profile = () => {
     );
   }
 
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading profile...</div>;
+  }
+  if (!userInfo) {
+    return <div className="flex items-center justify-center min-h-screen">Failed to load profile info.</div>;
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -46,12 +80,12 @@ const Profile = () => {
             <CardContent className="space-y-4">
               <div className="flex flex-col items-center">
                 <div className="h-24 w-24 rounded-full bg-gov-blue flex items-center justify-center text-white text-2xl font-bold mb-3">
-                  {currentUser.displayName.charAt(0)}
+                  {(userInfo.fullName || userInfo.agencyName || currentUser.displayName || "U").charAt(0)}
                 </div>
-                <h3 className="font-semibold text-lg">{currentUser.displayName}</h3>
-                <p className="text-sm text-muted-foreground">{currentUser.email}</p>
+                <h3 className="font-semibold text-lg">{userInfo.fullName || userInfo.agencyName}</h3>
+                <p className="text-sm text-muted-foreground">{userInfo.email}</p>
                 <p className="text-sm bg-blue-100 text-blue-800 rounded-full px-3 py-1 mt-2 capitalize">
-                  {currentUser.userType}
+                  {userInfo.userType || currentUser.userType}
                 </p>
               </div>
               
@@ -77,11 +111,11 @@ const Profile = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div className="bg-gray-50 p-4 rounded-md">
                       <h3 className="font-medium text-lg mb-1">Complaints Submitted</h3>
-                      <p className="text-3xl font-bold">4</p>
+                      <p className="text-3xl font-bold">-</p>
                     </div>
                     <div className="bg-gray-50 p-4 rounded-md">
                       <h3 className="font-medium text-lg mb-1">Resolved Issues</h3>
-                      <p className="text-3xl font-bold">1</p>
+                      <p className="text-3xl font-bold">-</p>
                     </div>
                   </div>
                   
@@ -119,13 +153,13 @@ const Profile = () => {
                 <div className="space-y-6">
                   <div>
                     <h3 className="font-medium text-lg mb-2">Agency Name</h3>
-                    <p className="text-gray-800">{currentUser.agencyName}</p>
+                    <p className="text-gray-800">{userInfo.agencyName}</p>
                   </div>
                   
                   <div>
                     <h3 className="font-medium text-lg mb-2">Complaint Categories</h3>
                     <div className="flex flex-wrap gap-2">
-                      {currentUser.categories?.map((category) => (
+                      {userInfo.categories?.map((category: string) => (
                         <span 
                           key={category} 
                           className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"

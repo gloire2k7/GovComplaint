@@ -60,4 +60,23 @@ public class AgencyController {
             .collect(Collectors.toList());
         return ResponseEntity.ok(categoryNames);
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getAgencyById(@PathVariable("id") UUID agencyId) {
+        return agencyRepository.findById(agencyId)
+            .map(agency -> {
+                var categories = agency.getCategories() == null ? List.of() :
+                    agency.getCategories().stream()
+                        .map(cat -> cat != null ? cat.getCategoryName() : null)
+                        .filter(catName -> catName != null)
+                        .collect(Collectors.toList());
+                return ResponseEntity.ok(Map.of(
+                    "id", agency.getId(),
+                    "agencyName", agency.getAgencyName(),
+                    "email", agency.getEmail(),
+                    "categories", categories
+                ));
+            })
+            .orElse(ResponseEntity.notFound().build());
+    }
 } 
